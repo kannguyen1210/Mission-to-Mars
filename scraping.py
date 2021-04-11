@@ -23,7 +23,8 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
+        "last_modified": dt.datetime.now(),
+        "hemispheres": mars_hemi(browser)
     }
     # Stop webdriver and return data
     browser.quit()
@@ -100,6 +101,43 @@ def mars_facts():
 
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html()
+
+def mars_hemi(browser):
+    try:
+        url = 'https://data-class-mars-hemispheres.s3.amazonaws.com/Mars_Hemispheres/index.html'
+        browser.visit(url)
+
+        hemisphere_image_urls = []
+
+        div_items = browser.find_by_tag('div[class="item"]')
+        item_index = 0
+
+        for div_items in div_items:
+            browser.visit(url)
+            browser.is_element_present_by_css('div.list_text', wait_time=1)
+
+            div_items = browser.find_by_tag('div[class="item"]')
+            div_items[item_index].find_by_tag('img').click()
+
+            hemispheres = {}
+
+            image_item = browser.find_by_text('Sample')
+            img_url = image_item['href']
+            title_item = browser.find_by_tag('h2[class="title"]')
+            title = title_item.value
+
+            hemispheres["img_url"] = img_url
+            hemispheres["title"] = title
+
+            hemisphere_image_urls.append(hemispheres)
+
+            item_index += 1
+
+    except BaseException:
+        return None
+    
+    return hemisphere_image_urls
+
 
 if __name__ == "__main__":
     # If running as script, print scraped data
